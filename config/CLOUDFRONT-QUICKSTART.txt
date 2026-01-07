@@ -1,0 +1,144 @@
+═══════════════════════════════════════════════════════════════════════════════
+  AWS CLOUDFRONT FOR HLS STREAMING - QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM SOLVED:
+✅ ERR_NAME_NOT_RESOLVED errors
+✅ CORS blocking HLS playback
+✅ Slow S3 direct streaming
+✅ High S3 data transfer costs
+
+SOLUTION: CloudFront CDN
+
+═══════════════════════════════════════════════════════════════════════════════
+QUICK SETUP (5 MINUTES)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. CREATE CLOUDFRONT DISTRIBUTION
+   → AWS Console: https://console.aws.amazon.com/cloudfront/
+   → Origin: us-music.s3.eu-north-1.amazonaws.com
+   → Click "Create Distribution"
+   → Wait 5-15 minutes for deployment
+
+2. GET YOUR CLOUDFRONT DOMAIN
+   → Example: d1a2b3c4d5e6f7.cloudfront.net
+   → Copy this domain name
+
+3. UPDATE .ENV FILE
+   
+   backend/.env:
+   ─────────────────────────────────────────────────────────────────────────
+   CLOUDFRONT_DOMAIN=d1a2b3c4d5e6f7.cloudfront.net
+   ─────────────────────────────────────────────────────────────────────────
+
+4. RESTART BACKEND SERVER
+   
+   cd D:\Dev\us-music\backend
+   npm run dev
+
+5. TEST
+   → Play a song
+   → Check browser console: No CORS errors
+   → Check backend logs: Should say "✅ Using CloudFront..."
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend logs should show:
+┌─────────────────────────────────────────────────────────────────────────────
+│ 🎵 Generating stream URL for: "Song Name" by Artist
+│    Song ID: 507f1f77bcf86cd799439011
+│    HLS Key: songs/507f1f77bcf86cd799439011/hls/playlist.m3u8
+│ 🔐 Generating streaming URL for: songs/.../playlist.m3u8
+│ ✅ Using CloudFront public URL (CDN, no signature)
+│    User: anonymous
+│    CDN: CloudFront
+│    URL: https://d1a2b3c4d5e6f7.cloudfront.net/songs/.../playlist.m3u8...
+└─────────────────────────────────────────────────────────────────────────────
+
+Frontend network tab should show:
+┌─────────────────────────────────────────────────────────────────────────────
+│ Request URL: https://YOUR_DOMAIN.cloudfront.net/.../playlist.m3u8
+│ Status: 200 OK
+│ Response Headers:
+│   access-control-allow-origin: *
+│   x-cache: Hit from cloudfront
+└─────────────────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+STILL USING S3 URLs?
+→ Check .env has CLOUDFRONT_DOMAIN=your-domain.cloudfront.net (NO https://)
+→ Restart backend: npm run dev
+→ Check logs: Should say "✅ Using CloudFront..."
+
+CORS ERRORS?
+→ Wait 5-15 minutes (CloudFront deployment time)
+→ CloudFront console → Behaviors → Edit → Response headers policy
+→ Add CORS headers or use "CORS-with-preflight" policy
+
+403 ACCESS DENIED?
+→ CloudFront console → Origins → Edit
+→ Set "Origin access" to "Public"
+→ OR configure Origin Access Control (OAC) + S3 bucket policy
+
+ERR_NAME_NOT_RESOLVED?
+→ Check CLOUDFRONT_DOMAIN in .env (no typos)
+→ Verify distribution status is "Deployed"
+→ Test: curl -I https://YOUR_DOMAIN.cloudfront.net
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTING COMMANDS
+═══════════════════════════════════════════════════════════════════════════════
+
+Test CloudFront distribution:
+curl -I https://YOUR_DISTRIBUTION.cloudfront.net
+
+Test backend stream endpoint:
+curl http://localhost:5000/api/v1/songs/SONG_ID/stream
+
+Check CloudFront status:
+aws cloudfront list-distributions --query "DistributionList.Items[*].[Id,DomainName,Status]"
+
+═══════════════════════════════════════════════════════════════════════════════
+PRODUCTION SECURITY (OPTIONAL)
+═══════════════════════════════════════════════════════════════════════════════
+
+For signed URLs (time-limited access):
+
+1. Create CloudFront key pair (requires root AWS account)
+2. Add to .env:
+   
+   CLOUDFRONT_KEY_PAIR_ID=APKAXXXXXXXXXXXXXXXX
+   CLOUDFRONT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+
+3. System will automatically use signed URLs
+
+See CLOUDFRONT-SETUP.md for detailed instructions.
+
+═══════════════════════════════════════════════════════════════════════════════
+COST SAVINGS
+═══════════════════════════════════════════════════════════════════════════════
+
+With CloudFront:
+✅ 50-90% reduction in S3 data transfer costs
+✅ 80-95% reduction in S3 GET requests
+✅ Faster streaming worldwide
+✅ Better user experience
+
+Example: 1000 streams/day
+→ S3 only: ~$20/month
+→ CloudFront: ~$5/month
+
+═══════════════════════════════════════════════════════════════════════════════
+NEED HELP?
+═══════════════════════════════════════════════════════════════════════════════
+
+Full documentation: backend/config/CLOUDFRONT-SETUP.md
+AWS CloudFront docs: https://docs.aws.amazon.com/cloudfront/
+AWS Support: https://console.aws.amazon.com/support/
+
+═══════════════════════════════════════════════════════════════════════════════

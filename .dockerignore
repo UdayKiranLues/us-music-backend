@@ -1,0 +1,58 @@
+# Dockerfile
+Dockerfile
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+.npm
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Development
+.editorconfig
+.prettierrc
+.eslintrc*
+
+# Temporary files
+tmp/
+temp/
+uploads/temp/*
+
+# Docker
+docker-compose*.yml
+.dockerignore
