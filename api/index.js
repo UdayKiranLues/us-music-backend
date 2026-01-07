@@ -1,6 +1,6 @@
-import app from './app.js';
-import connectDB from './config/database.js';
-import logger from './utils/logger.js';
+import app from '../src/app.js';
+import connectDB from '../src/config/database.js';
+import logger from '../src/utils/logger.js';
 
 let isConnected = false;
 
