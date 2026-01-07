@@ -1,6 +1,6 @@
-import app from '../src/app.js';
+import '../src/config/index.js'; // Load environment variables
 import connectDB from '../src/config/database.js';
-import logger from '../src/utils/logger.js';
+import app from '../src/app.js';
 
 let isConnected = false;
 
@@ -13,23 +13,27 @@ const ensureConnection = async () => {
   try {
     await connectDB();
     isConnected = true;
-    logger.info('Database connected (serverless)');
+    console.log('✅ Database connected (serverless)');
   } catch (error) {
-    logger.error('Database connection failed:', error);
+    console.error('❌ Database connection failed:', error);
     throw error;
   }
 };
 
-// Export the Express app for Vercel
-export default async (req, res) => {
+// Export handler for Vercel
+export default async function handler(req, res) {
   try {
+    // Ensure database connection
     await ensureConnection();
+    
+    // Pass request to Express app
     return app(req, res);
   } catch (error) {
-    logger.error('Serverless function error:', error);
+    console.error('❌ Serverless function error:', error);
     return res.status(500).json({ 
       success: false, 
-      error: 'Internal server error' 
+      error: 'Internal server error',
+      message: error.message 
     });
   }
-};
+}

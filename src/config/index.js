@@ -32,7 +32,8 @@ const validateCloudFrontDomain = () => {
   const domain = process.env.CLOUDFRONT_DOMAIN;
   
   if (!domain) {
-    if (process.env.NODE_ENV === 'production') {
+    // In serverless/Vercel, we can use S3 proxy instead
+    if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
       throw new Error(
         '❌ CLOUDFRONT_DOMAIN is required in production!\n' +
         '   Songs cannot be streamed without CloudFront.\n' +
@@ -40,17 +41,13 @@ const validateCloudFrontDomain = () => {
         '   Example: CLOUDFRONT_DOMAIN=https://d123abc.cloudfront.net'
       );
     }
-    console.warn('⚠️  CLOUDFRONT_DOMAIN not configured - using S3 fallback for development');
-    console.warn('   ⚠️  Production deployment will require CloudFront!');
+    console.warn('⚠️  CLOUDFRONT_DOMAIN not configured - using S3 fallback');
     return null;
   }
   
   // Validate format
-  if (!domain.includes('cloudfront.net')) {
-    throw new Error(
-      `❌ Invalid CLOUDFRONT_DOMAIN: ${domain}\n` +
-      '   Expected format: https://d123abc.cloudfront.net'
-    );
+  if (!domain.includes('cloudfront.net') && !domain.includes('s3.amazonaws.com')) {
+    console.warn(`⚠️  Non-standard domain: ${domain}`);
   }
   
   return domain;
