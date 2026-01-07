@@ -47,8 +47,8 @@ transports.push(
   })
 );
 
-// File transports (production only)
-if (config.isProduction || process.env.ENABLE_FILE_LOGGING === 'true') {
+// File transports (only in non-serverless production with writable filesystem)
+if (!process.env.VERCEL && (config.isProduction || process.env.ENABLE_FILE_LOGGING === 'true')) {
   const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
 
   // Combined logs (all levels)
