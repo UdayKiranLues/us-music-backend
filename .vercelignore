@@ -1,0 +1,15 @@
+node_modules
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.vscode
+.idea
+test-*.js
+scripts/
+uploads/
+*.md
+docker-compose*.yml
+Dockerfile
+.dockerignore
