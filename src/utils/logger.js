@@ -88,6 +88,32 @@ if (!process.env.VERCEL && (config.isProduction || process.env.ENABLE_FILE_LOGGI
   );
 }
 
+// Create exception and rejection handlers (only for non-serverless production)
+const exceptionHandlers = [];
+const rejectionHandlers = [];
+
+if (!process.env.VERCEL && config.isProduction) {
+  const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+  
+  exceptionHandlers.push(
+    new DailyRotateFile({
+      filename: path.join(logsDir, 'exceptions-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '30d',
+      maxSize: '20m',
+    })
+  );
+  
+  rejectionHandlers.push(
+    new DailyRotateFile({
+      filename: path.join(logsDir, 'rejections-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '30d',
+      maxSize: '20m',
+    })
+  );
+}
+
 // Create logger instance
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || (config.isDevelopment ? 'debug' : 'info'),
@@ -96,33 +122,9 @@ const logger = winston.createLogger({
   // Don't exit on handled exceptions
   exitOnError: false,
   // Handle uncaught exceptions
-  exceptionHandlers: config.isProduction
-    ? [
-        new DailyRotateFile({
-          filename: path.join(
-            process.env.LOGS_DIR || path.join(process.cwd(), 'logs'),
-            'exceptions-%DATE%.log'
-          ),
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '30d',
-          maxSize: '20m',
-        }),
-      ]
-    : [],
+  exceptionHandlers,
   // Handle unhandled promise rejections
-  rejectionHandlers: config.isProduction
-    ? [
-        new DailyRotateFile({
-          filename: path.join(
-            process.env.LOGS_DIR || path.join(process.cwd(), 'logs'),
-            'rejections-%DATE%.log'
-          ),
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '30d',
-          maxSize: '20m',
-        }),
-      ]
-    : [],
+  rejectionHandlers,
 });
 
 /**
