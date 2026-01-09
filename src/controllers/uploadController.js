@@ -1,5 +1,10 @@
 import Song from '../models/Song.js';
-import { upload, uploadCover, uploadWithCover, handleMulterError } from '../middleware/upload.js';
+import {
+  uploadAudioMiddleware,
+  uploadWithCoverMiddleware,
+  uploadErrorHandler,
+} from "../middleware/upload.js";
+// import { upload, uploadCover, uploadWithCover, handleMulterError } from '../middleware/upload.js';
 import { convertToHLS, getAudioMetadata, validateAudioFile, cleanupFiles } from '../services/ffmpegService.js';
 import { uploadHLSToS3, uploadToS3 } from '../utils/s3.js';
 import path from 'path';
