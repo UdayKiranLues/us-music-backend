@@ -5,7 +5,7 @@ import {
   uploadAudioMiddleware,
   uploadWithCoverMiddleware,
   uploadErrorHandler,
-} from "../controllers/upload.js";
+} from "../controllers/uploadController.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 import { validateAWSConfig } from "../middleware/upload.js";
 
