@@ -5,9 +5,10 @@ import {
   uploadAudioMiddleware,
   uploadWithCoverMiddleware,
   uploadErrorHandler,
-} from "../controllers/uploadController.js";
+} from "../controllers/upload.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 import { validateAWSConfig } from "../middleware/upload.js";
+
 
 const router = express.Router();
 

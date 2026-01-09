@@ -3,16 +3,12 @@ import path from "path";
 import fs from "fs";
 
 /**
- * =========================================================
- * Vercel-safe temporary directory
- * ---------------------------------------------------------
- * Only /tmp is writable in serverless environments
- * =========================================================
+ * Only writable directory on Vercel
  */
-export const TEMP_UPLOAD_DIR = "/tmp/uploads";
+const TEMP_UPLOAD_DIR = "/tmp/uploads";
 
 /**
- * Create temp directory lazily (ONLY when needed)
+ * Ensure temp directory exists (lazy)
  */
 const ensureTempDir = () => {
   if (!fs.existsSync(TEMP_UPLOAD_DIR)) {
@@ -22,7 +18,7 @@ const ensureTempDir = () => {
 
 /**
  * =========================================================
- * Multer Storage (Audio & Cover)
+ * Multer Storage
  * =========================================================
  */
 const storage = multer.diskStorage({
@@ -31,26 +27,18 @@ const storage = multer.diskStorage({
     cb(null, TEMP_UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(
-      null,
-      `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`
-    );
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${file.fieldname}-${unique}${path.extname(file.originalname)}`);
   },
 });
 
 /**
  * =========================================================
- * Audio File Filter
+ * File Filters
  * =========================================================
  */
 const audioFileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    "audio/mpeg",
-    "audio/mp3",
-    "audio/wav",
-    "audio/x-wav",
-  ];
+  const allowedMimes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav"];
   const allowedExts = [".mp3", ".wav"];
 
   const ext = path.extname(file.originalname).toLowerCase();
@@ -62,60 +50,37 @@ const audioFileFilter = (req, file, cb) => {
   }
 };
 
-/**
- * =========================================================
- * Cover Image Filter
- * =========================================================
- */
 const coverFileFilter = (req, file, cb) => {
   const allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(
-      new Error("Only image files (JPEG, PNG, WebP) are allowed"),
-      false
-    );
+    cb(new Error("Only image files (JPEG, PNG, WebP) are allowed"), false);
   }
 };
 
-/**
- * =========================================================
- * Combined Audio + Cover Filter
- * =========================================================
- */
 const combinedFileFilter = (req, file, cb) => {
-  if (file.fieldname === "audio") {
-    return audioFileFilter(req, file, cb);
-  }
-
-  if (file.fieldname === "cover") {
-    return coverFileFilter(req, file, cb);
-  }
-
+  if (file.fieldname === "audio") return audioFileFilter(req, file, cb);
+  if (file.fieldname === "cover") return coverFileFilter(req, file, cb);
   cb(new Error("Unexpected field"), false);
 };
 
 /**
  * =========================================================
- * Multer Instances
+ * Exported Multer Middleware (ONLY ONCE)
  * =========================================================
  */
 export const uploadAudioMiddleware = multer({
   storage,
   fileFilter: audioFileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB
-  },
+  limits: { fileSize: 50 * 1024 * 1024 },
 }).single("audio");
 
 export const uploadWithCoverMiddleware = multer({
   storage,
   fileFilter: combinedFileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024,
-  },
+  limits: { fileSize: 50 * 1024 * 1024 },
 }).fields([
   { name: "audio", maxCount: 1 },
   { name: "cover", maxCount: 1 },
@@ -131,10 +96,9 @@ export const uploadErrorHandler = (err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
         success: false,
-        error: "File too large. Maximum size is 50MB",
+        error: "File too large. Max size is 50MB",
       });
     }
-
     return res.status(400).json({
       success: false,
       error: err.message,
@@ -153,7 +117,7 @@ export const uploadErrorHandler = (err, req, res, next) => {
 
 /**
  * =========================================================
- * AWS Config Validation Middleware
+ * AWS Config Validation
  * =========================================================
  */
 export const validateAWSConfig = async (req, res, next) => {
@@ -162,16 +126,14 @@ export const validateAWSConfig = async (req, res, next) => {
   if (!config.aws.accessKeyId || !config.aws.secretAccessKey) {
     return res.status(500).json({
       success: false,
-      error:
-        "AWS credentials not configured. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.",
+      error: "AWS credentials missing",
     });
   }
 
   if (!config.aws.s3Bucket) {
     return res.status(500).json({
       success: false,
-      error:
-        "S3 bucket not configured. Check AWS_S3_BUCKET environment variable.",
+      error: "AWS S3 bucket not configured",
     });
   }
 
