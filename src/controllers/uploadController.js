@@ -287,9 +287,4 @@ export const uploadSongWithCover = async (req, res, next) => {
 };
 
 // Middleware exports for routes
-export const uploadAudioMiddleware = upload.single('audio');
-export const uploadWithCoverMiddleware = uploadWithCover.fields([
-  { name: 'audio', maxCount: 1 },
-  { name: 'cover', maxCount: 1 },
-]);
-export const uploadErrorHandler = handleMulterError;
+// Middleware are exported from ../middleware/upload.js — do not re-declare here.

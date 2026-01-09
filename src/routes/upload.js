@@ -2,10 +2,12 @@ import express from "express";
 import {
   uploadSong,
   uploadSongWithCover,
+} from "../controllers/uploadController.js";
+import {
   uploadAudioMiddleware,
   uploadWithCoverMiddleware,
   uploadErrorHandler,
-} from "../controllers/uploadController.js";
+} from "../middleware/upload.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 import { validateAWSConfig } from "../middleware/upload.js";
 
