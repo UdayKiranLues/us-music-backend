@@ -9,6 +9,7 @@ import {
   getSongStream,
   getSecureStream,
   proxyHLS,
+  publishSong,
 } from '../controllers/songController.js';
 import { authenticate, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate, schemas } from '../middleware/validation.js';
@@ -32,6 +33,7 @@ router.post('/:id/play', optionalAuth, incrementPlayCount);
 // Protected routes
 router.post('/', authenticate, authorize('artist', 'admin'), validate(schemas.createSong), createSong);
 router.put('/:id', authenticate, validate(schemas.updateSong), updateSong);
+router.put('/:id/publish', authenticate, authorize('artist', 'admin'), publishSong);
 router.delete('/:id', authenticate, deleteSong);
 
 export default router;

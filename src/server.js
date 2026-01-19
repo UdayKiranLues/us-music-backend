@@ -2,7 +2,7 @@ import app from './app.js';
 import connectDB from './config/database.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
-import { fixAdminUser } from './utils/seed.js';
+import { fixAdminUser, fixDuplicateUsers } from './utils/seed.js';
 import { checkFFmpegAvailability } from './services/ffmpegService.js';
 import { validateS3Config } from './utils/s3.js';
 import { runDiagnosticsOnStartup } from './utils/playbackDiagnostic.js';
@@ -22,6 +22,9 @@ const startServer = async () => {
   
   // Fix admin user (delete and recreate with correct password)
   await fixAdminUser();
+
+  // Fix duplicate users (remove duplicates and keep one)
+  await fixDuplicateUsers();
 
   // Check FFmpeg availability
   const ffmpegAvailable = await checkFFmpegAvailability();

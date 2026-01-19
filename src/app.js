@@ -20,6 +20,12 @@ import historyRoutes from './routes/historyRoutes.js';
 import recommendationRoutes from './routes/recommendationRoutes.js';
 import uploadRoutes from './routes/upload.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import podcastRoutes from './routes/podcastRoutes.js';
+import podcastEpisodeRoutes from './routes/podcastEpisodeRoutes.js';
+import artistAuthRoutes from './routes/artistAuthRoutes.js';
+import artistRoutes from './routes/artistRoutes.js';
+import artistPodcastRoutes from './routes/artistPodcastRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
 
@@ -48,29 +54,28 @@ app.use(
 );
 
 // CORS configuration
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = config.cors.allowedOrigins || [
-      config.cors.origin,
-      'http://localhost:5173',
-      'http://localhost:5174', // Vite alternate port
-      'http://localhost:3000',
-    ];
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin || allowedOrigins.includes(origin)) {
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://us-music-frontend.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow Postman
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("CORS not allowed"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining'],
-  maxAge: 86400, // 24 hours
-};
-app.use(cors(corsOptions));
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Force preflight support
+app.options("*", cors());
 
 // Data sanitization against NoSQL injection
 app.use(mongoSanitize());
@@ -192,6 +197,12 @@ app.use(`${apiVersion}/history`, historyRoutes);
 app.use(`${apiVersion}/recommendations`, recommendationRoutes);
 app.use(`${apiVersion}/upload`, uploadLimiter, uploadRoutes);
 app.use(`${apiVersion}/analytics`, analyticsRoutes);
+app.use(`${apiVersion}/podcasts`, podcastRoutes);
+app.use(`${apiVersion}`, podcastEpisodeRoutes);
+app.use(`${apiVersion}/auth/artist`, artistAuthRoutes);
+app.use(`${apiVersion}/artist`, artistRoutes);
+app.use(`${apiVersion}/artist`, artistPodcastRoutes);
+app.use(`${apiVersion}/admin`, adminRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

@@ -98,6 +98,10 @@ export const uploadSong = async (req, res, next) => {
     // Add user who uploaded
     if (req.user && req.user._id) {
       tempSong.createdBy = req.user._id;
+      // If user is an artist, set createdByArtist
+      if (req.user.role === 'artist' && req.user.artistProfile) {
+        tempSong.createdByArtist = req.user.artistProfile;
+      }
     }
 
     // Save to database
@@ -252,6 +256,10 @@ export const uploadSongWithCover = async (req, res, next) => {
     // Add user who uploaded
     if (req.user && req.user._id) {
       tempSong.createdBy = req.user._id;
+      // If user is an artist, set createdByArtist
+      if (req.user.role === 'artist' && req.user.artistProfile) {
+        tempSong.createdByArtist = req.user.artistProfile;
+      }
     }
 
     // Save to database

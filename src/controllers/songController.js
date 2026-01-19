@@ -28,6 +28,11 @@ export const getSongs = asyncHandler(async (req, res) => {
   // Build query
   const query = {};
 
+  // Only show published songs to non-artist users
+  if (!req.user || req.user.role !== 'artist') {
+    query.status = 'published';
+  }
+
   // Filters
   if (genre) {
     query.genre = Array.isArray(genre) ? { $in: genre } : { $in: [genre] };
@@ -91,7 +96,14 @@ export const getSongs = asyncHandler(async (req, res) => {
  * @access Public
  */
 export const getSong = asyncHandler(async (req, res) => {
-  const song = await Song.findById(req.params.id)
+  const query = { _id: req.params.id };
+
+  // Only show published songs to non-artist users
+  if (!req.user || req.user.role !== 'artist') {
+    query.status = 'published';
+  }
+
+  const song = await Song.findOne(query)
     .select('-__v')
     .lean();
 
@@ -377,4 +389,32 @@ export const proxyHLS = asyncHandler(async (req, res) => {
     
     res.status(500).send('Failed to proxy HLS stream');
   }
+});
+
+/**
+ * Publish song (change status to published)
+ * @route PUT /api/v1/songs/:id/publish
+ * @access Private (Artist/Admin)
+ */
+export const publishSong = asyncHandler(async (req, res) => {
+  const song = await Song.findById(req.params.id);
+
+  if (!song) {
+    throw new AppError('Song not found', 404);
+  }
+
+  // Only the creating artist or admin may publish
+  if (req.user.role !== 'admin') {
+    if (!req.user.artistProfile || String(song.createdByArtist) !== String(req.user.artistProfile)) {
+      return res.status(403).json({ success: false, error: 'Not authorized to publish this song' });
+    }
+  }
+
+  song.status = 'published';
+  await song.save();
+
+  res.json({
+    success: true,
+    data: song,
+  });
 });

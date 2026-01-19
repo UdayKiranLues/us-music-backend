@@ -23,6 +23,7 @@ export const createAdminUser = async () => {
     // The User model's pre-save hook will hash it automatically
     const admin = await User.create({
       name: 'Admin User',
+      username: 'admin',
       email: 'admin@usmusic.com',
       password: 'admin123', // Will be hashed by pre-save hook
       role: 'admin',
@@ -51,6 +52,7 @@ export const createTestUsers = async () => {
     const testUsers = [
       {
         name: 'Test Artist',
+        username: 'testartist',
         email: 'artist@usmusic.com',
         password: 'artist123', // Will be hashed by pre-save hook
         role: 'artist',
@@ -58,6 +60,7 @@ export const createTestUsers = async () => {
       },
       {
         name: 'Test User',
+        username: 'testuser',
         email: 'user@usmusic.com',
         password: 'user123', // Will be hashed by pre-save hook
         role: 'user',
@@ -137,6 +140,57 @@ export const fixAdminUser = async () => {
     logger.info('✅ Admin user fixed successfully');
   } catch (error) {
     logger.error('Failed to fix admin user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fix duplicate users by removing duplicates and keeping one
+ */
+export const fixDuplicateUsers = async () => {
+  try {
+    logger.info('🔧 Fixing duplicate users...');
+
+    // Find duplicates by username
+    const usernameDuplicates = await User.aggregate([
+      {
+        $group: {
+          _id: "$username",
+          count: { $sum: 1 },
+          ids: { $push: "$_id" }
+        }
+      },
+      { $match: { count: { $gt: 1 } } }
+    ]);
+
+    // Find duplicates by email
+    const emailDuplicates = await User.aggregate([
+      {
+        $group: {
+          _id: "$email",
+          count: { $sum: 1 },
+          ids: { $push: "$_id" }
+        }
+      },
+      { $match: { count: { $gt: 1 } } }
+    ]);
+
+    // Remove duplicates, keeping the first one
+    for (const dup of usernameDuplicates) {
+      dup.ids.shift(); // keep one
+      await User.deleteMany({ _id: { $in: dup.ids } });
+      logger.info(`Removed ${dup.ids.length} duplicate username entries for: ${dup._id}`);
+    }
+
+    for (const dup of emailDuplicates) {
+      dup.ids.shift(); // keep one
+      await User.deleteMany({ _id: { $in: dup.ids } });
+      logger.info(`Removed ${dup.ids.length} duplicate email entries for: ${dup._id}`);
+    }
+
+    logger.info('✅ Duplicate users fixed successfully');
+  } catch (error) {
+    logger.error('Failed to fix duplicate users:', error);
     throw error;
   }
 };

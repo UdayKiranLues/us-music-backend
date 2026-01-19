@@ -93,6 +93,15 @@ const songSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    status: {
+      type: String,
+      enum: ['draft', 'published'],
+      default: 'draft',
+    },
+    createdByArtist: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ArtistProfile',
+    },
   },
   {
     timestamps: true,
@@ -108,7 +117,6 @@ songSchema.index({ mood: 1, popularity: -1 }); // Filter by mood, sort by popula
 songSchema.index({ language: 1, popularity: -1 }); // Filter by language, sort by popularity
 songSchema.index({ createdAt: -1 }); // Sort by newest
 songSchema.index({ popularity: -1, createdAt: -1 }); // Popular and recent songs
-songSchema.index({ totalPlays: -1 }); // Sort by most played
 songSchema.index({ album: 1, totalPlays: -1 }); // Album songs sorted by plays
 
 // BPM range queries for tempo-based filtering

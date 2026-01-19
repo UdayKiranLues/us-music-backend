@@ -129,16 +129,19 @@ const sampleSongs = [
 const sampleUsers = [
   {
     name: 'John Doe',
+    username: 'johndoe',
     email: 'john@example.com',
     password: 'Password123!',
   },
   {
     name: 'Jane Smith',
+    username: 'janesmith',
     email: 'jane@example.com',
     password: 'Password123!',
   },
   {
     name: 'Mike Johnson',
+    username: 'mikejohnson',
     email: 'mike@example.com',
     password: 'Password123!',
   },

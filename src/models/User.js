@@ -1,49 +1,80 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [100, 'Name cannot exceed 100 characters'],
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [100, "Name cannot exceed 100 characters"],
     },
-    email: {
+
+    // ❌ DO NOT USE unique:true here (causes index corruption)
+    username: {
       type: String,
-      required: [true, 'Email is required'],
-      unique: true,
+      required: [true, "Username is required"],
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+      minlength: [2, "Username must be at least 2 characters"],
+      maxlength: [100, "Username cannot exceed 100 characters"],
     },
+
+    // ❌ DO NOT USE unique:true here
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+    },
+
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Don't include password in queries by default
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
+      select: false,
     },
+
     role: {
       type: String,
-      enum: ['user', 'artist', 'admin'],
-      default: 'user',
+      enum: ["user", "artist", "admin"],
+      default: "user",
     },
+
+    roleSelected: {
+      type: Boolean,
+      default: false,
+    },
+
+    usernameChanged: {
+      type: Boolean,
+      default: false,
+    },
+
+    artistProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ArtistProfile",
+    },
+
     isActive: {
       type: Boolean,
       default: true,
     },
+
     favourites: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Song',
+        ref: "Song",
       },
     ],
+
     playHistory: [
       {
         song: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'Song',
+          ref: "Song",
           required: true,
         },
         playedAt: {
@@ -52,6 +83,7 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+
     refreshToken: String,
   },
   {
@@ -59,14 +91,26 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for optimized queries
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ 'playHistory.playedAt': -1 }); // For recent history queries
-userSchema.index({ favourites: 1 }); // For favourite lookups
 
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+// ===============================
+// INDEXES (SINGLE SOURCE OF TRUTH)
+// ===============================
+
+// ✅ ONLY define unique indexes here
+userSchema.index({ username: 1 }, { unique: true });
+userSchema.index({ email: 1 }, { unique: true });
+
+// Performance indexes
+userSchema.index({ "playHistory.playedAt": -1 });
+userSchema.index({ favourites: 1 });
+
+
+// ===============================
+// PASSWORD HASHING
+// ===============================
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(12);
@@ -77,12 +121,20 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// Compare password method
+
+// ===============================
+// PASSWORD COMPARISON
+// ===============================
+
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove sensitive data from JSON response
+
+// ===============================
+// CLEAN JSON OUTPUT
+// ===============================
+
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
@@ -91,6 +143,6 @@ userSchema.methods.toJSON = function () {
   return user;
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

@@ -150,6 +150,47 @@ export const uploadHLSToS3 = async (files, songId) => {
 };
 
 /**
+ * Upload multiple HLS files for a podcast episode to S3 (PRIVATE)
+ * Path: podcasts/<podcastId>/episodes/<episodeId>/hls/<file>
+ * Returns playlist S3 key
+ */
+export const uploadPodcastHLSToS3 = async (files, podcastId, episodeId) => {
+  try {
+    const uploadPromises = files.map(async (file) => {
+      const key = `podcasts/${podcastId}/episodes/${episodeId}/hls/${file.name}`;
+      const contentType = file.name.endsWith('.m3u8') 
+        ? 'application/vnd.apple.mpegurl'
+        : 'video/MP2T';
+      await uploadStreamToS3(file.path, key, contentType, false);
+      return key;
+    });
+
+    const keys = await Promise.all(uploadPromises);
+    const playlistKey = keys.find(key => key.endsWith('.m3u8'));
+    return playlistKey;
+  } catch (error) {
+    console.error('Podcast HLS upload error:', error);
+    throw new Error(`HLS upload to S3 failed: ${error.message}`);
+  }
+};
+
+/**
+ * Upload original audio file for podcast episode
+ * Path: podcasts/<podcastId>/episodes/<episodeId>/audio/<filename>
+ * Returns S3 key
+ */
+export const uploadPodcastAudioToS3 = async (filePath, podcastId, episodeId, filename) => {
+  try {
+    const key = `podcasts/${podcastId}/episodes/${episodeId}/audio/${filename}`;
+    await uploadStreamToS3(filePath, key, 'audio/mpeg', false);
+    return key;
+  } catch (error) {
+    console.error('Podcast audio upload error:', error);
+    throw new Error(`Audio upload failed: ${error.message}`);
+  }
+};
+
+/**
  * Generate signed URL for S3 object (fallback when CloudFront not configured)
  * @param {string} key - S3 object key
  * @param {number} expiresIn - Expiration time in seconds (default 1 hour)

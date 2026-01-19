@@ -31,8 +31,17 @@ export const schemas = {
   }),
 
   login: Joi.object({
-    email: Joi.string().email().required(),
+    email: Joi.string().email(),
+    username: Joi.string().min(2).max(100),
     password: Joi.string().required(),
+  }).or('email', 'username'),
+
+  chooseRole: Joi.object({
+    role: Joi.string().valid('user', 'artist').required(),
+  }),
+
+  changeUsername: Joi.object({
+    newUsername: Joi.string().min(2).max(100).pattern(/^[a-z0-9_]+$/).required(),
   }),
 
   // User
