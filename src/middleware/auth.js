@@ -8,18 +8,11 @@ import { AppError } from '../utils/errors.js';
  */
 export const authenticate = async (req, res, next) => {
   try {
-    // Get token from cookie or Authorization header (for API clients)
-    let token = req.cookies?.accessToken;
+    // Get token from Authorization header
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7);
-      }
-    }
-
-    if (!token) {
-      throw new AppError('Authentication required', 401);
+      return res.status(401).json({ error: "No token provided" });
     }
 
     // Verify token
