@@ -231,7 +231,7 @@ export const uploadSongWithCover = async (req, res, next) => {
         console.log('🖼️ Uploading cover image to S3...');
         const coverKey = `songs/${songId}/cover${path.extname(coverFile.originalname)}`;
         const coverBuffer = fs.readFileSync(coverFile.path);
-        coverUrl = await uploadToS3(coverBuffer, coverKey, coverFile.mimetype);
+        coverUrl = await uploadToS3(coverBuffer, coverKey, coverFile.mimetype, true);
         console.log('✅ Cover uploaded:', coverUrl);
       } catch (error) {
         console.error('❌ Cover upload failed:', error.message);
