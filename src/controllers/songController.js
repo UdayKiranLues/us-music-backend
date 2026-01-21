@@ -28,8 +28,9 @@ export const getSongs = asyncHandler(async (req, res) => {
   // Build query
   const query = {};
 
-  // Only show published songs to non-artist users
-  if (!req.user || req.user.role !== 'artist') {
+  // Only show published songs to non-artist users (in production)
+  // In development, show all songs for testing
+  if (process.env.NODE_ENV === 'production' && (!req.user || req.user.role !== 'artist')) {
     query.status = 'published';
   }
 
