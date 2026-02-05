@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\Dev\\us-music\\us-music-backend\\logs\\.a772fd1dc283fc31bae2506cc82961ed65a6354d-audit.json",
+    "files": [
+        {
+            "date": 1770194826228,
+            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\combined-2026-02-04.log",
+            "hash": "14fc32b8e263bfbcc2c18d47feb07bb240db60e3f517dedf865ea191795fd6c4"
+        },
+        {
+            "date": 1770269895381,
+            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\combined-2026-02-05.log",
+            "hash": "722cd00a57f1e9b6689126c089222737f043167cb01a10afbf03d331dcf54c76"
+        }
+    ],
+    "hashType": "sha256"
+}

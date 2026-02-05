@@ -10,6 +10,7 @@ import {
   getSecureStream,
   proxyHLS,
   publishSong,
+  getCoverSignedUrl,
 } from '../controllers/songController.js';
 import { authenticate, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate, schemas } from '../middleware/validation.js';
@@ -34,6 +35,10 @@ router.post('/:id/play', optionalAuth, incrementPlayCount);
 router.post('/', authenticate, authorize('artist', 'admin'), validate(schemas.createSong), createSong);
 router.put('/:id', authenticate, validate(schemas.updateSong), updateSong);
 router.put('/:id/publish', authenticate, authorize('artist', 'admin'), publishSong);
+
+// Presigned cover image URL endpoint
+router.get('/:id/cover-signed-url', getCoverSignedUrl);
+
 router.delete('/:id', authenticate, deleteSong);
 
 export default router;

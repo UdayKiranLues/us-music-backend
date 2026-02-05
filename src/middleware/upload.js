@@ -123,6 +123,11 @@ export const uploadErrorHandler = (err, req, res, next) => {
 export const validateAWSConfig = async (req, res, next) => {
   const { default: config } = await import("../config/index.js");
 
+  // Skip AWS check if using local storage
+  if (config.storage.type === 'local') {
+    return next();
+  }
+
   if (!config.aws.accessKeyId || !config.aws.secretAccessKey) {
     return res.status(500).json({
       success: false,

@@ -8,11 +8,11 @@ dotenv.config();
  */
 const validateAwsRegion = (region) => {
   if (!region) return null;
-  
+
   // AWS region format: 2 letter code - region name - number
   // Examples: us-east-1, eu-west-2, ap-south-1
   const regionRegex = /^[a-z]{2}-[a-z]+-\d+$/;
-  
+
   if (!regionRegex.test(region)) {
     console.error('❌ Invalid AWS_REGION format:', region);
     console.error('✅ Valid format examples: us-east-1, eu-west-2, eu-north-1');
@@ -23,14 +23,14 @@ const validateAwsRegion = (region) => {
       `Please check your AWS_REGION environment variable.`
     );
   }
-  
+
   return region;
 };
 
 // Validate CloudFront Domain (REQUIRED for production)
 const validateCloudFrontDomain = () => {
   const domain = process.env.CLOUDFRONT_DOMAIN;
-  
+
   if (!domain) {
     // In serverless/Vercel, we can use S3 proxy instead
     if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
@@ -44,12 +44,12 @@ const validateCloudFrontDomain = () => {
     console.warn('⚠️  CLOUDFRONT_DOMAIN not configured - using S3 fallback');
     return null;
   }
-  
+
   // Validate format
   if (!domain.includes('cloudfront.net') && !domain.includes('s3.amazonaws.com')) {
     console.warn(`⚠️  Non-standard domain: ${domain}`);
   }
-  
+
   return domain;
 };
 
@@ -114,6 +114,13 @@ const config = {
   pagination: {
     defaultPageSize: parseInt(process.env.DEFAULT_PAGE_SIZE, 10) || 20,
     maxPageSize: parseInt(process.env.MAX_PAGE_SIZE, 10) || 100,
+  },
+
+  // Storage
+  storage: {
+    type: process.env.STORAGE_TYPE || 's3', // 's3' or 'local'
+    localDir: process.env.LOCAL_UPLOAD_DIR || 'uploads',
+    baseUrl: process.env.BASE_URL || 'http://localhost:5000',
   },
 };
 

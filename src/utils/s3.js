@@ -64,26 +64,25 @@ export const uploadToS3 = async (fileBuffer, key, contentType = 'application/oct
       Key: key,
       Body: fileBuffer,
       ContentType: contentType,
-      // Private by default for secure streaming
-      ...(isPublic && { ACL: 'public-read' }),
+      // No ACL, as bucket owner enforced disables ACLs
     });
 
     await s3Client.send(command);
-    
+
     // Return CloudFront URL if configured, otherwise S3 URL
     if (cloudFrontService.isConfigured()) {
       return `https://${config.aws.cloudFrontDomain}/${key}`;
     }
-    
+
     return `https://${config.aws.s3Bucket}.s3.${config.aws.region}.amazonaws.com/${key}`;
   } catch (error) {
     console.error('❌ S3 upload error:', error.message);
-    
+
     // Provide more context for common errors
     if (error.message.includes('not a valid hostname')) {
       throw new Error('Invalid AWS region format. Check your AWS_REGION environment variable.');
     }
-    
+
     throw new Error(`S3 upload failed: ${error.message}`);
   }
 };
@@ -94,7 +93,7 @@ export const uploadToS3 = async (fileBuffer, key, contentType = 'application/oct
 export const uploadStreamToS3 = async (filePath, key, contentType = 'application/octet-stream', isPublic = false) => {
   try {
     const fileStream = fs.createReadStream(filePath);
-    
+
     const upload = new Upload({
       client: s3Client,
       params: {
@@ -102,18 +101,17 @@ export const uploadStreamToS3 = async (filePath, key, contentType = 'application
         Key: key,
         Body: fileStream,
         ContentType: contentType,
-        // Private by default for secure streaming
-        ...(isPublic && { ACL: 'public-read' }),
+        // No ACL, as bucket owner enforced disables ACLs
       },
     });
 
     await upload.done();
-    
+
     // Return CloudFront URL if configured, otherwise S3 URL
     if (cloudFrontService.isConfigured()) {
       return `https://${config.aws.cloudFrontDomain}/${key}`;
     }
-    
+
     return `https://${config.aws.s3Bucket}.s3.${config.aws.region}.amazonaws.com/${key}`;
   } catch (error) {
     console.error('S3 stream upload error:', error);

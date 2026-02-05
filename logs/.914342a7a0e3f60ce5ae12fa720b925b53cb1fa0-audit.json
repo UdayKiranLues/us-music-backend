@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\Dev\\us-music-backend\\logs\\.914342a7a0e3f60ce5ae12fa720b925b53cb1fa0-audit.json",
+    "files": [
+        {
+            "date": 1770016890023,
+            "name": "D:\\Dev\\us-music-backend\\logs\\combined-2026-02-02.log",
+            "hash": "90d3f06a81e9cd32c95f630076f9b31616031df8751ee9c1e91f852199d99ed3"
+        }
+    ],
+    "hashType": "sha256"
+}

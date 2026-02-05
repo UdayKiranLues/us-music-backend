@@ -6,7 +6,7 @@ import {
 } from "../middleware/upload.js";
 // import { upload, uploadCover, uploadWithCover, handleMulterError } from '../middleware/upload.js';
 import { convertToHLS, getAudioMetadata, validateAudioFile, cleanupFiles } from '../services/ffmpegService.js';
-import { uploadHLSToS3, uploadToS3 } from '../utils/s3.js';
+import { uploadHLSForSong, uploadFile } from '../utils/storage.js';
 import path from 'path';
 import fs from 'fs';
 import { AppError } from '../utils/errors.js';
@@ -86,7 +86,7 @@ export const uploadSong = async (req, res, next) => {
 
     // Upload HLS files to S3
     console.log('☁️ Uploading HLS files to S3...');
-    const playlistUrl = await uploadHLSToS3(hlsResult.files, songId);
+    const playlistUrl = await uploadHLSForSong(hlsResult.files, songId);
 
     if (!playlistUrl) {
       throw new AppError('Failed to get HLS playlist URL from S3', 500);
@@ -106,7 +106,7 @@ export const uploadSong = async (req, res, next) => {
 
     // Save to database
     await tempSong.save();
-    
+
     console.log('✅ Song uploaded successfully:', songId);
 
     // Cleanup temp files
@@ -231,7 +231,7 @@ export const uploadSongWithCover = async (req, res, next) => {
         console.log('🖼️ Uploading cover image to S3...');
         const coverKey = `songs/${songId}/cover${path.extname(coverFile.originalname)}`;
         const coverBuffer = fs.readFileSync(coverFile.path);
-        coverUrl = await uploadToS3(coverBuffer, coverKey, coverFile.mimetype, true);
+        coverUrl = await uploadFile(coverBuffer, coverKey, coverFile.mimetype, true);
         console.log('✅ Cover uploaded:', coverUrl);
       } catch (error) {
         console.error('❌ Cover upload failed:', error.message);
@@ -241,12 +241,12 @@ export const uploadSongWithCover = async (req, res, next) => {
 
     // Upload HLS files to S3
     console.log('☁️ Uploading HLS files to S3...');
-    const playlistUrl = await uploadHLSToS3(hlsResult.files, songId);
+    const playlistUrl = await uploadHLSForSong(hlsResult.files, songId);
 
     if (!playlistUrl) {
       throw new AppError('Failed to get HLS playlist URL from S3', 500);
     }
-    
+
     console.log('✅ HLS files uploaded');
 
     // Update song with URLs
@@ -293,6 +293,3 @@ export const uploadSongWithCover = async (req, res, next) => {
     next(error);
   }
 };
-
-// Middleware exports for routes
-// Middleware are exported from ../middleware/upload.js — do not re-declare here.

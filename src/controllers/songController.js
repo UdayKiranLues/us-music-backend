@@ -1,3 +1,35 @@
+import { getSignedS3Url } from '../utils/s3.js';
+/**
+ * Get presigned S3 URL for a song's cover image
+ * @route GET /api/v1/songs/:id/cover-signed-url
+ * @access Public
+ */
+export const getCoverSignedUrl = asyncHandler(async (req, res) => {
+  const song = await Song.findById(req.params.id).select('coverImageUrl').lean();
+  if (!song || !song.coverImageUrl) {
+    throw new AppError('Song or cover image not found', 404);
+  }
+
+  // If it's a local URL, return it as is
+  if (song.coverImageUrl.startsWith('http://localhost') || song.coverImageUrl.includes('/uploads/')) {
+    console.log(`🖼️ Serving local cover URL for song: ${req.params.id}`);
+    return res.json({ success: true, url: song.coverImageUrl });
+  }
+
+  // Extract S3 key from the coverImageUrl (assuming it contains the S3 key or full S3 URL)
+  let s3Key = song.coverImageUrl;
+  // If it's a full S3 URL, extract the key
+  if (s3Key.includes('amazonaws.com/')) {
+    const urlParts = s3Key.split('.amazonaws.com/');
+    if (urlParts.length === 2) {
+      s3Key = urlParts[1];
+    }
+  }
+
+  // Generate presigned URL (default 1 hour)
+  const signedUrl = await getSignedS3Url(s3Key, 3600);
+  res.json({ success: true, url: signedUrl });
+});
 import Song from '../models/Song.js';
 import History from '../models/History.js';
 import { AppError } from '../utils/errors.js';
@@ -47,14 +79,14 @@ export const getSongs = asyncHandler(async (req, res) => {
   if (artist) {
     query.artist = new RegExp(artist, 'i');
   }
-  
+
   // BPM range filter
   if (minBpm || maxBpm) {
     query.bpm = {};
     if (minBpm) query.bpm.$gte = parseInt(minBpm);
     if (maxBpm) query.bpm.$lte = parseInt(maxBpm);
   }
-  
+
   // Text search
   if (search) {
     query.$text = { $search: search };
@@ -271,7 +303,7 @@ export const getSecureStream = asyncHandler(async (req, res) => {
 
     // Use backend proxy URL to bypass CORS issues
     const streamUrl = `http://localhost:${config.port}/api/v1/songs/${songId}/hls/playlist.m3u8`;
-    
+
     console.log(`✅ Stream URL generated: ${streamUrl}`);
     logger.info(`Stream: ${song._id}, song: ${song.title}`);
 
@@ -286,7 +318,7 @@ export const getSecureStream = asyncHandler(async (req, res) => {
     // Catch any unexpected errors
     console.error('❌ Stream endpoint error:', error);
     logger.error('Stream endpoint crashed:', error);
-    
+
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error',
@@ -365,16 +397,16 @@ export const proxyHLS = asyncHandler(async (req, res) => {
     const s3Response = await s3Client.send(command);
 
     // Set appropriate headers
-    const contentType = hlsPath.endsWith('.m3u8') 
+    const contentType = hlsPath.endsWith('.m3u8')
       ? 'application/vnd.apple.mpegurl'
       : hlsPath.endsWith('.ts')
-      ? 'video/MP2T'
-      : s3Response.ContentType || 'application/octet-stream';
+        ? 'video/MP2T'
+        : s3Response.ContentType || 'application/octet-stream';
 
     res.set('Content-Type', contentType);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Cache-Control', 'public, max-age=3600');
-    
+
     if (s3Response.ContentLength) {
       res.set('Content-Length', s3Response.ContentLength);
     }
@@ -383,11 +415,11 @@ export const proxyHLS = asyncHandler(async (req, res) => {
     s3Response.Body.pipe(res);
   } catch (error) {
     console.error('❌ HLS proxy error:', error.message);
-    
+
     if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
       return res.status(404).send('HLS file not found');
     }
-    
+
     res.status(500).send('Failed to proxy HLS stream');
   }
 });

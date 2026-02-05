@@ -129,6 +129,18 @@ const uploadLimiter = rateLimit({
 });
 
 app.use('/api/', generalLimiter);
+if (config.storage.type === 'local') {
+  app.use(`/${config.storage.localDir}`, (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  }, express.static(config.storage.localDir));
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -163,7 +175,7 @@ app.get('/ready', async (req, res) => {
   try {
     const mongoose = await import('mongoose');
     const dbState = mongoose.default.connection.readyState;
-    
+
     if (dbState === 1) {
       // 1 = connected
       res.status(200).json({

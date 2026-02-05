@@ -5,6 +5,7 @@ import logger from './utils/logger.js';
 import { fixAdminUser, fixDuplicateUsers } from './utils/seed.js';
 import { checkFFmpegAvailability } from './services/ffmpegService.js';
 import { validateS3Config } from './utils/s3.js';
+import { validateStorageConfig } from './utils/storage.js';
 import { runDiagnosticsOnStartup } from './utils/playbackDiagnostic.js';
 
 // Handle uncaught exceptions
@@ -19,7 +20,7 @@ process.on('uncaughtException', (err) => {
 // Connect to database and seed admin user
 const startServer = async () => {
   await connectDB();
-  
+
   // Fix admin user (delete and recreate with correct password)
   await fixAdminUser();
 
@@ -34,11 +35,11 @@ const startServer = async () => {
     console.warn('Please install FFmpeg to enable these features.\n');
   }
 
-  // Validate AWS S3 configuration
-  const s3Valid = await validateS3Config();
-  if (!s3Valid) {
-    console.warn('\n⚠️  WARNING: AWS S3 configuration is invalid!');
-    console.warn('File uploads will not work until AWS credentials are properly configured.\n');
+  // Validate storage configuration (S3 or Local)
+  const storageValid = await validateStorageConfig();
+  if (!storageValid) {
+    console.warn('\n⚠️  WARNING: Storage configuration is invalid!');
+    console.warn('File uploads may not work correctly.\n');
   }
 
   // Start server
@@ -91,7 +92,7 @@ const startServer = async () => {
     logger.info('SIGTERM received. Shutting down gracefully...');
     server.close(() => {
       logger.info('HTTP server closed');
-      
+
       // Close database connection
       import('mongoose').then((mongoose) => {
         mongoose.default.connection.close(false, () => {
@@ -100,7 +101,7 @@ const startServer = async () => {
         });
       });
     });
-    
+
     // Force shutdown after 30 seconds
     setTimeout(() => {
       logger.error('Forced shutdown after timeout');
