@@ -21,6 +21,16 @@ router.get('/categories', getCategories);
 router.get('/:id', getPodcast);
 router.get('/:id/episodes', optionalAuth, getEpisodesByPodcast);
 
+// Legacy/Compatibility route for creating a podcast show
+router.post('/',
+  authenticate,
+  authorize('artist'),
+  validateAWSConfig,
+  uploadAudioMiddleware,
+  uploadErrorHandler,
+  uploadPodcast
+);
+
 /**
  * Artist-only routes
  */
