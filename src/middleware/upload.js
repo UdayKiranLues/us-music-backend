@@ -77,6 +77,12 @@ export const uploadAudioMiddleware = multer({
   limits: { fileSize: 50 * 1024 * 1024 },
 }).single("audio");
 
+export const uploadCoverMiddleware = multer({
+  storage,
+  fileFilter: coverFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).single("image");
+
 export const uploadWithCoverMiddleware = multer({
   storage,
   fileFilter: combinedFileFilter,

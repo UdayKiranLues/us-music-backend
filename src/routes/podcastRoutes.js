@@ -7,7 +7,8 @@ import {
   deletePodcast,
   getCategories,
 } from '../controllers/podcastController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { getEpisodesByPodcast } from '../controllers/podcastEpisodeController.js';
+import { authenticate, authorize, optionalAuth } from '../middleware/auth.js';
 import { uploadAudioMiddleware, uploadErrorHandler, validateAWSConfig } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get('/feed', getPublicFeed);
 router.get('/categories', getCategories);
 router.get('/:id', getPodcast);
+router.get('/:id/episodes', optionalAuth, getEpisodesByPodcast);
 
 /**
  * Artist-only routes

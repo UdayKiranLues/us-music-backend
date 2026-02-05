@@ -8,6 +8,9 @@ import config from '../config/index.js';
 /**
  * Upload a podcast episode (Artists only)
  */
+// @desc    Upload a new podcast (Series/Show)
+// @route   POST /api/v1/podcasts/upload
+// @access  Private (Artist)
 export const uploadPodcast = async (req, res, next) => {
   try {
     // Check if user is an artist
@@ -18,65 +21,62 @@ export const uploadPodcast = async (req, res, next) => {
       });
     }
 
-    // Check if file was uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'Audio file is required'
-      });
-    }
-
-    const { title, description, category, keywords } = req.body;
+    const { title, description, categories, keywords, host } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category) {
+    if (!title || !description || !categories) {
+      if (req.file) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         success: false,
-        error: 'Title, description, and category are required'
+        error: 'Title, description, and categories are required'
       });
     }
 
-    const filePath = req.file.path;
-    const fileSize = req.file.size;
-    const mimeType = req.file.mimetype;
+    // Handle categories
+    let categoriesArray = [];
+    if (categories) {
+      try {
+        categoriesArray = typeof categories === 'string'
+          ? (categories.startsWith('[') ? JSON.parse(categories) : [categories])
+          : Array.isArray(categories) ? categories : [];
+      } catch (e) {
+        categoriesArray = [categories];
+      }
+    }
 
-    // Get audio metadata
-    const metadata = await getAudioMetadata(filePath);
-    const duration = metadata.duration;
-
-    // Generate unique S3 key
-    const fileExtension = path.extname(req.file.originalname);
-    const s3Key = `podcasts/${req.user._id}/${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
-
-    // Read file buffer
-    const fileBuffer = fs.readFileSync(filePath);
-
-    // Upload to S3
-    const audioUrl = await uploadToS3(fileBuffer, s3Key, mimeType, false);
+    // Handle cover image if uploaded
+    let coverImage = '';
+    if (req.file) {
+      const s3Key = `podcasts/${req.user._id}/covers/${Date.now()}-${req.file.originalname}`;
+      // Use general uploadFile utility which handles both S3 and Local based on config
+      coverImage = await uploadFile(req.file, s3Key, req.file.mimetype, true);
+      // Clean up temp file
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    }
 
     // Parse keywords
     let keywordsArray = [];
     if (keywords) {
       keywordsArray = typeof keywords === 'string'
-        ? keywords.split(',').map(k => k.trim()).filter(k => k.length > 0)
+        ? (keywords.startsWith('[') ? JSON.parse(keywords) : keywords.split(',').map(k => k.trim()).filter(k => k.length > 0))
         : Array.isArray(keywords) ? keywords : [];
     }
 
-    // Create podcast document
+    // Create podcast show document
     const podcast = await Podcast.create({
       title: title.trim(),
       description: description.trim(),
-      category,
+      categories: categoriesArray,
       keywords: keywordsArray,
-      audioUrl,
-      duration,
+      host: host || req.user.name,
       artist: req.user._id,
-      fileSize,
-      mimeType
+      coverImage: coverImage || ''
     });
 
-    // Clean up temp file
-    fs.unlinkSync(filePath);
+    res.status(201).json({
+      success: true,
+      data: podcast
+    });
 
     res.status(201).json({
       success: true,
@@ -84,10 +84,6 @@ export const uploadPodcast = async (req, res, next) => {
     });
 
   } catch (error) {
-    // Clean up temp file on error
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     next(error);
   }
 };
@@ -106,7 +102,7 @@ export const getPublicFeed = async (req, res, next) => {
 
     // Filter by category if provided
     if (category && category !== 'all') {
-      query.category = category;
+      query.categories = category;
     }
 
     const podcasts = await Podcast.find(query)
@@ -191,7 +187,7 @@ export const getArtistPodcasts = async (req, res, next) => {
 export const getPodcast = async (req, res, next) => {
   try {
     const podcast = await Podcast.findById(req.params.id)
-      .populate('artist', 'username')
+      .populate('artist', 'name username')
       .lean();
 
     if (!podcast) {

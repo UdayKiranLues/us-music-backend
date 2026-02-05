@@ -103,8 +103,8 @@ export const uploadEpisode = async (req, res, next) => {
     if (metadata.duration) episode.duration = metadata.duration;
     await episode.save();
 
-    // Increment podcast totalEpisodes
-    podcast.totalEpisodes = (podcast.totalEpisodes || 0) + 1;
+    // Increment podcast episodeCount
+    podcast.episodeCount = (podcast.episodeCount || 0) + 1;
     await podcast.save();
 
     // Cleanup
@@ -113,7 +113,7 @@ export const uploadEpisode = async (req, res, next) => {
     res.status(201).json({ success: true, data: episode });
   } catch (err) {
     // attempt cleanup
-    try { if (tempFiles.length) await cleanupFiles(tempFiles); } catch (e) {}
+    try { if (tempFiles.length) await cleanupFiles(tempFiles); } catch (e) { }
     next(err);
   }
 };
@@ -124,8 +124,8 @@ export const deleteEpisode = async (req, res, next) => {
     const ep = await PodcastEpisode.findByIdAndDelete(req.params.id);
     if (!ep) return res.status(404).json({ success: false, error: 'Episode not found' });
 
-    // Decrement podcast totalEpisodes
-    await Podcast.findByIdAndUpdate(ep.podcastId, { $inc: { totalEpisodes: -1 } });
+    // Decrement podcast episodeCount
+    await Podcast.findByIdAndUpdate(ep.podcastId, { $inc: { episodeCount: -1 } });
 
     res.json({ success: true });
   } catch (err) {
@@ -156,4 +156,49 @@ export const publishEpisode = async (req, res, next) => {
   }
 };
 
-export default { streamEpisode, reportPlay, uploadEpisode, deleteEpisode };
+// Public - list episodes for a specific podcast
+export const getEpisodesByPodcast = async (req, res, next) => {
+  try {
+    const podcastId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const query = { podcastId };
+
+    // Only allow published episodes for non-artist/non-admin
+    if (!req.user || (req.user.role !== 'artist' && req.user.role !== 'admin')) {
+      query.status = 'published';
+    }
+
+    const episodes = await PodcastEpisode.find(query)
+      .sort({ episodeNumber: 1, createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await PodcastEpisode.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: episodes,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default {
+  streamEpisode,
+  reportPlay,
+  uploadEpisode,
+  deleteEpisode,
+  publishEpisode,
+  getEpisodesByPodcast
+};
