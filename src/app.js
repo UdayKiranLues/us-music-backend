@@ -117,7 +117,7 @@ const authLimiter = rateLimit({
 // Upload rate limiting
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 uploads per hour
+  max: config.isDevelopment ? 1000 : 10, // 1000 uploads per hour in dev, 10 in prod
   message: { success: false, error: 'Upload limit exceeded' },
   handler: (req, res) => {
     securityLogger.rateLimitExceeded(req.ip, 'upload');
