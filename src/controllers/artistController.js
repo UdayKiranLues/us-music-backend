@@ -35,10 +35,10 @@ export const registerArtist = async (req, res, next) => {
 export const loginArtist = async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
-    const query = email 
+    const query = email
       ? { email: email.toLowerCase() }
       : { username: username.toLowerCase() };
-    
+
     const user = await User.findOne(query).select('+password');
     if (!user) return next(new AppError('Invalid credentials', 401));
 
@@ -89,4 +89,112 @@ export const updateArtistProfile = async (req, res, next) => {
   }
 };
 
-export default { registerArtist, loginArtist, getArtistMe, updateArtistProfile };
+export const getArtistStats = async (req, res, next) => {
+  try {
+    const artistProfileId = req.user.artistProfile;
+    if (!artistProfileId) {
+      return next(new AppError('Artist profile not found', 404));
+    }
+
+    const mongoose = await import('mongoose');
+    const Song = mongoose.default.model('Song');
+    const Album = mongoose.default.model('Album');
+
+    // Count songs
+    const songCount = await Song.countDocuments({ createdByArtist: artistProfileId });
+
+    // Count albums
+    const albumCount = await Album.countDocuments({ artistProfile: artistProfileId });
+
+    // Sum total plays across all songs
+    const songStats = await Song.aggregate([
+      { $match: { createdByArtist: artistProfileId } },
+      { $group: { _id: null, totalPlays: { $sum: "$totalPlays" } } }
+    ]);
+
+    const totalPlays = songStats.length > 0 ? songStats[0].totalPlays : 0;
+
+    res.json({
+      success: true,
+      data: {
+        songs: songCount,
+        albums: albumCount,
+        totalPlays,
+        followers: 0, // Placeholder
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPublicArtistProfile = async (req, res, next) => {
+  try {
+    const profile = await ArtistProfile.findOne({ artistName: req.params.artistName });
+    if (!profile) {
+      return next(new AppError('Artist not found', 404));
+    }
+
+    const user = await User.findById(profile.userId).select('name username avatar');
+
+    res.json({
+      success: true,
+      data: {
+        ...profile.toObject(),
+        name: user.name,
+        username: user.username,
+        avatar: user.avatar
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getArtistSongsPublic = async (req, res, next) => {
+  try {
+    const profile = await ArtistProfile.findOne({ artistName: req.params.artistName });
+    if (!profile) {
+      return next(new AppError('Artist not found', 404));
+    }
+
+    const mongoose = await import('mongoose');
+    const Song = mongoose.default.model('Song');
+
+    const songs = await Song.find({ createdByArtist: profile._id, status: 'published' })
+      .sort('-createdAt')
+      .lean();
+
+    res.json({
+      success: true,
+      data: songs
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getArtistPodcastsPublic = async (req, res, next) => {
+  try {
+    const profile = await ArtistProfile.findOne({ artistName: req.params.artistName });
+    if (!profile) {
+      return next(new AppError('Artist not found', 404));
+    }
+
+    const mongoose = await import('mongoose');
+    const Podcast = mongoose.default.model('Podcast');
+
+    const podcasts = await Podcast.find({ artist: profile.userId })
+      .sort('-createdAt')
+      .lean();
+
+    res.json({
+      success: true,
+      data: podcasts
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default { registerArtist, loginArtist, getArtistMe, updateArtistProfile, getArtistStats, getPublicArtistProfile, getArtistSongsPublic, getArtistPodcastsPublic };

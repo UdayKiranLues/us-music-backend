@@ -188,7 +188,7 @@ export const updateSong = asyncHandler(async (req, res) => {
   }
 
   // Check ownership
-  if (song.uploadedBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (song.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     throw new AppError('Not authorized to update this song', 403);
   }
 
@@ -216,15 +216,43 @@ export const deleteSong = asyncHandler(async (req, res) => {
   }
 
   // Check ownership
-  if (song.uploadedBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (song.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     throw new AppError('Not authorized to delete this song', 403);
   }
 
+  const songId = song._id.toString();
+
+  // Delete from database
   await song.deleteOne();
+
+  // Cleanup files for local storage
+  if (config.storage.type === 'local') {
+    try {
+      // Delete HLS directory
+      const hlsDir = path.resolve(config.storage.localDir, 'songs', songId);
+      if (fs.existsSync(hlsDir)) {
+        console.log(`🗑️ Deleting local HLS directory: ${hlsDir}`);
+        fs.rmSync(hlsDir, { recursive: true, force: true });
+      }
+
+      // Delete cover image if it's local
+      if (song.coverImageUrl && song.coverImageUrl.includes('/uploads/')) {
+        const coverRelative = song.coverImageUrl.split('/uploads/')[1];
+        const coverPath = path.resolve(config.storage.localDir, coverRelative);
+        if (fs.existsSync(coverPath)) {
+          console.log(`🗑️ Deleting local cover image: ${coverPath}`);
+          fs.unlinkSync(coverPath);
+        }
+      }
+    } catch (err) {
+      console.error(`❌ Failed to cleanup files for song ${songId}:`, err.message);
+      // We don't throw here to ensure the API response is still sent
+    }
+  }
 
   res.json({
     success: true,
-    message: 'Song deleted successfully',
+    message: 'Song and associated files deleted successfully',
   });
 });
 
@@ -482,7 +510,7 @@ export const getArtistSongs = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   // Filter by the authenticated user's ID
-  const query = { uploadedBy: req.user._id };
+  const query = { createdBy: req.user._id };
 
   const songs = await Song.find(query)
     .sort('-createdAt')

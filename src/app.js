@@ -25,7 +25,9 @@ import podcastEpisodeRoutes from './routes/podcastEpisodeRoutes.js';
 import artistAuthRoutes from './routes/artistAuthRoutes.js';
 import artistRoutes from './routes/artistRoutes.js';
 import artistPodcastRoutes from './routes/artistPodcastRoutes.js';
+import albumRoutes from './routes/albumRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import publicArtistRoutes from './routes/publicArtistRoutes.js';
 
 const app = express();
 
@@ -204,12 +206,14 @@ const apiVersion = `/api/${config.apiVersion}`;
 
 app.use(`${apiVersion}/auth`, authLimiter, authRoutes);
 app.use(`${apiVersion}/songs`, songRoutes);
+app.use(`${apiVersion}/albums`, albumRoutes);
 app.use(`${apiVersion}/favorites`, favoriteRoutes);
 app.use(`${apiVersion}/history`, historyRoutes);
 app.use(`${apiVersion}/recommendations`, recommendationRoutes);
 app.use(`${apiVersion}/upload`, uploadLimiter, uploadRoutes);
 app.use(`${apiVersion}/analytics`, analyticsRoutes);
 app.use(`${apiVersion}/podcasts`, podcastRoutes);
+app.use(`${apiVersion}/artists`, publicArtistRoutes);
 app.use(`${apiVersion}`, podcastEpisodeRoutes);
 app.use(`${apiVersion}/auth/artist`, artistAuthRoutes);
 app.use(`${apiVersion}/artist`, artistRoutes);
