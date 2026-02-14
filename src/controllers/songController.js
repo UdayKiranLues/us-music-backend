@@ -302,7 +302,7 @@ export const getSecureStream = asyncHandler(async (req, res) => {
     }
 
     // Use backend proxy URL to bypass CORS issues
-    const streamUrl = `http://localhost:${config.port}/api/v1/songs/${songId}/hls/playlist.m3u8`;
+    const streamUrl = `${config.storage.baseUrl}/api/v1/songs/${songId}/hls/playlist.m3u8`;
 
     console.log(`✅ Stream URL generated: ${streamUrl}`);
     logger.info(`Stream: ${song._id}, song: ${song.title}`);
@@ -375,7 +375,38 @@ export const proxyHLS = asyncHandler(async (req, res) => {
       return res.status(404).send('Song or HLS stream not found');
     }
 
-    // S3 client with credentials
+    // Set appropriate headers
+    const contentType = hlsPath.endsWith('.m3u8')
+      ? 'application/vnd.apple.mpegurl'
+      : hlsPath.endsWith('.ts')
+        ? 'video/MP2T'
+        : 'application/octet-stream';
+
+    res.set('Content-Type', contentType);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cache-Control', 'public, max-age=3600');
+
+    // Handle Local Storage
+    if (config.storage.type === 'local') {
+      const localPath = path.resolve(config.storage.localDir, 'songs', songId, 'hls', hlsPath);
+      console.log(`📂 Serving local HLS file: ${localPath}`);
+
+      if (!fs.existsSync(localPath)) {
+        console.error(`❌ Local HLS file not found: ${localPath}`);
+        return res.status(404).send('HLS file not found locally');
+      }
+
+      const stream = fs.createReadStream(localPath);
+      stream.on('error', (err) => {
+        console.error('❌ Stream error:', err);
+        res.status(500).send('Failed to stream local file');
+      });
+      return stream.pipe(res);
+    }
+
+    // Handle S3 Storage
+    console.log(`📡 Fetching from S3: ${config.aws.s3Bucket}/songs/${songId}/hls/${hlsPath}`);
+
     const s3Client = new S3Client({
       region: config.aws.region,
       credentials: {
@@ -384,42 +415,23 @@ export const proxyHLS = asyncHandler(async (req, res) => {
       },
     });
 
-    // Build S3 key
-    const s3Key = `songs/${songId}/hls/${hlsPath}`;
-    console.log(`📡 Fetching from S3: ${config.aws.s3Bucket}/${s3Key}`);
-
-    // Fetch from S3 using AWS SDK
     const command = new GetObjectCommand({
       Bucket: config.aws.s3Bucket,
-      Key: s3Key,
+      Key: `songs/${songId}/hls/${hlsPath}`,
     });
 
     const s3Response = await s3Client.send(command);
-
-    // Set appropriate headers
-    const contentType = hlsPath.endsWith('.m3u8')
-      ? 'application/vnd.apple.mpegurl'
-      : hlsPath.endsWith('.ts')
-        ? 'video/MP2T'
-        : s3Response.ContentType || 'application/octet-stream';
-
-    res.set('Content-Type', contentType);
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Cache-Control', 'public, max-age=3600');
 
     if (s3Response.ContentLength) {
       res.set('Content-Length', s3Response.ContentLength);
     }
 
-    // Stream the S3 response body
     s3Response.Body.pipe(res);
   } catch (error) {
     console.error('❌ HLS proxy error:', error.message);
-
     if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
       return res.status(404).send('HLS file not found');
     }
-
     res.status(500).send('Failed to proxy HLS stream');
   }
 });
