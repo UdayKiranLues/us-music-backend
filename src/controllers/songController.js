@@ -375,6 +375,7 @@ export const proxyHLS = asyncHandler(async (req, res) => {
     // Validate song exists
     const song = await Song.findById(songId).select('hlsUrl').lean();
     if (!song || !song.hlsUrl) {
+      console.warn(`⚠️ HLS Proxy: Song ${songId} not found or has no HLS URL`);
       return res.status(404).send('Song or HLS stream not found');
     }
 
@@ -392,23 +393,26 @@ export const proxyHLS = asyncHandler(async (req, res) => {
     // Handle Local Storage
     if (config.storage.type === 'local') {
       const localPath = path.resolve(config.storage.localDir, 'songs', songId, 'hls', hlsPath);
-      console.log(`📂 Serving local HLS file: ${localPath}`);
+      console.log(`📂 HLS Proxy: Serving local file: ${localPath}`);
 
       if (!fs.existsSync(localPath)) {
-        console.error(`❌ Local HLS file not found: ${localPath}`);
+        console.error(`❌ HLS Proxy: Local file not found: ${localPath}`);
         return res.status(404).send('HLS file not found locally');
       }
 
+      console.log(`🚀 HLS Proxy: Streaming local file...`);
       const stream = fs.createReadStream(localPath);
       stream.on('error', (err) => {
-        console.error('❌ Stream error:', err);
-        res.status(500).send('Failed to stream local file');
+        console.error('❌ HLS Proxy: Stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).send('Failed to stream local file');
+        }
       });
       return stream.pipe(res);
     }
 
     // Handle S3 Storage
-    console.log(`📡 Fetching from S3: ${config.aws.s3Bucket}/songs/${songId}/hls/${hlsPath}`);
+    console.log(`📡 HLS Proxy: Fetching from S3: ${config.aws.s3Bucket}/songs/${songId}/hls/${hlsPath}`);
 
     const s3Client = new S3Client({
       region: config.aws.region,
