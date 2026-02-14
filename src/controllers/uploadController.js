@@ -10,6 +10,7 @@ import { uploadHLSForSong, uploadFile } from '../utils/storage.js';
 import path from 'path';
 import fs from 'fs';
 import { AppError } from '../utils/errors.js';
+import config from '../config/index.js';
 
 /**
  * Upload and process song
@@ -64,7 +65,7 @@ export const uploadSong = async (req, res, next) => {
 
     // Convert to HLS
     console.log('🎵 Converting to HLS format...');
-    const hlsOutputDir = path.join('uploads', 'hls', `song-${Date.now()}`);
+    const hlsOutputDir = path.join(config.storage.localDir, 'hls', `song-${Date.now()}`);
     tempFiles.push(hlsOutputDir);
 
     const hlsResult = await convertToHLS(audioFile.path, hlsOutputDir);
@@ -161,7 +162,7 @@ export const uploadSongWithCover = async (req, res, next) => {
     }
 
     const audioFile = req.files.audio[0];
-    const coverFile = req.files.cover && req.files.cover[0] ? req.files.cover[0] : null;
+    const coverFile = req.files.coverImage && req.files.coverImage[0] ? req.files.coverImage[0] : null;
 
     console.log('✅ Audio file received:', audioFile.originalname);
     if (coverFile) {
@@ -204,7 +205,7 @@ export const uploadSongWithCover = async (req, res, next) => {
 
     // Convert to HLS
     console.log('🎵 Converting to HLS format...');
-    const hlsOutputDir = path.join('uploads', 'hls', `song-${Date.now()}`);
+    const hlsOutputDir = path.join(config.storage.localDir, 'hls', `song-${Date.now()}`);
     tempFiles.push(hlsOutputDir);
 
     const hlsResult = await convertToHLS(audioFile.path, hlsOutputDir);

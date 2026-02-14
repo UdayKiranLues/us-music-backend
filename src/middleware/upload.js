@@ -2,17 +2,24 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+import os from 'os';
+
 /**
  * Only writable directory on Vercel
+ * Locally, we use the OS temp directory
  */
-const TEMP_UPLOAD_DIR = "/tmp/uploads";
+const TEMP_UPLOAD_DIR = path.join(os.tmpdir(), "us-music-uploads");
 
 /**
  * Ensure temp directory exists (lazy)
  */
 const ensureTempDir = () => {
   if (!fs.existsSync(TEMP_UPLOAD_DIR)) {
-    fs.mkdirSync(TEMP_UPLOAD_DIR, { recursive: true });
+    try {
+      fs.mkdirSync(TEMP_UPLOAD_DIR, { recursive: true });
+    } catch (err) {
+      console.error(`Failed to create temp directory ${TEMP_UPLOAD_DIR}:`, err.message);
+    }
   }
 };
 
@@ -62,7 +69,7 @@ const coverFileFilter = (req, file, cb) => {
 
 const combinedFileFilter = (req, file, cb) => {
   if (file.fieldname === "audio") return audioFileFilter(req, file, cb);
-  if (file.fieldname === "cover") return coverFileFilter(req, file, cb);
+  if (file.fieldname === "coverImage") return coverFileFilter(req, file, cb);
   cb(new Error("Unexpected field"), false);
 };
 
@@ -81,7 +88,7 @@ export const uploadCoverMiddleware = multer({
   storage,
   fileFilter: coverFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
-}).single("image");
+}).single("coverImage");
 
 export const uploadWithCoverMiddleware = multer({
   storage,
@@ -89,7 +96,7 @@ export const uploadWithCoverMiddleware = multer({
   limits: { fileSize: 50 * 1024 * 1024 },
 }).fields([
   { name: "audio", maxCount: 1 },
-  { name: "cover", maxCount: 1 },
+  { name: "coverImage", maxCount: 1 },
 ]);
 
 /**

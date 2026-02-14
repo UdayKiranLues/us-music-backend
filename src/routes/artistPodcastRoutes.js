@@ -1,10 +1,13 @@
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateAWSConfig, uploadAudioMiddleware, uploadCoverMiddleware, uploadErrorHandler } from '../middleware/upload.js';
-import { uploadPodcast } from '../controllers/podcastController.js';
+import { uploadPodcast, getArtistPodcasts } from '../controllers/podcastController.js';
 import { uploadEpisode, publishEpisode } from '../controllers/podcastEpisodeController.js';
 
 const router = express.Router();
+
+// Get artist's own podcasts
+router.get('/podcasts', authenticate, authorize('artist'), getArtistPodcasts);
 
 // Upload podcast series (artist)
 router.post('/podcasts', authenticate, authorize('artist'), validateAWSConfig, uploadCoverMiddleware, uploadErrorHandler, uploadPodcast);

@@ -9,13 +9,14 @@ const podcastSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: [true, "Description is required"],
-    maxlength: [2000, "Description cannot exceed 2000 characters"]
+    required: false,
+    maxlength: [2000, "Description cannot exceed 2000 characters"],
+    default: ""
   },
-  categories: [{
-    type: String,
-    trim: true
-  }],
+  categories: {
+    type: [String],
+    default: ["general"]
+  },
   keywords: [{
     type: String,
     trim: true,

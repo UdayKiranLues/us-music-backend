@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '../../');
 
 /**
  * Validate AWS region format
@@ -119,7 +125,9 @@ const config = {
   // Storage
   storage: {
     type: process.env.STORAGE_TYPE || 's3', // 's3' or 'local'
-    localDir: process.env.LOCAL_UPLOAD_DIR || 'uploads',
+    localDir: path.isAbsolute(process.env.LOCAL_UPLOAD_DIR || 'uploads')
+      ? process.env.LOCAL_UPLOAD_DIR
+      : path.resolve(rootDir, process.env.LOCAL_UPLOAD_DIR || 'uploads'),
     baseUrl: process.env.BASE_URL || 'http://localhost:5000',
   },
 };

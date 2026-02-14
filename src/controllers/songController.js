@@ -451,3 +451,36 @@ export const publishSong = asyncHandler(async (req, res) => {
     data: song,
   });
 });
+
+/**
+ * Get songs for the authenticated artist
+ * @route GET /api/v1/artist/songs
+ * @access Private (Artist)
+ */
+export const getArtistSongs = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  // Filter by the authenticated user's ID
+  const query = { uploadedBy: req.user._id };
+
+  const songs = await Song.find(query)
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const total = await Song.countDocuments(query);
+
+  res.json({
+    success: true,
+    data: songs,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    }
+  });
+});

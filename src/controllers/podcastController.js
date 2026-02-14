@@ -1,9 +1,9 @@
 import Podcast from '../models/Podcast.js';
-import { uploadToS3 } from '../utils/s3.js';
 import { getAudioMetadata } from '../services/ffmpegService.js';
 import fs from 'fs';
 import path from 'path';
 import config from '../config/index.js';
+import { uploadFile } from '../utils/storage.js';
 
 /**
  * Upload a podcast episode (Artists only)
@@ -13,6 +13,7 @@ import config from '../config/index.js';
 // @access  Private (Artist)
 export const uploadPodcast = async (req, res, next) => {
   try {
+    console.log('🎙️ uploadPodcast controller reached - latest version');
     // Check if user is an artist
     if (!req.user || req.user.role !== 'artist') {
       return res.status(403).json({
@@ -21,35 +22,37 @@ export const uploadPodcast = async (req, res, next) => {
       });
     }
 
-    const { title, description, categories, keywords, host } = req.body;
+    const { title, description, categories, category, keywords, host } = req.body;
 
-    // Validate required fields
-    if (!title || !description || !categories) {
+    // For legacy support, allow creating a show if at least title is present.
+    // If it looks like an episode upload hitting the wrong endpoint, we'll try to be helpful.
+    if (!title) {
       if (req.file) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         success: false,
-        error: 'Title, description, and categories are required'
+        error: 'Title is required. If you are trying to upload an episode, please select a Podcast Series first.'
       });
     }
 
-    // Handle categories
+    // Handle single category vs categories array
+    let finalCategories = categories || category || ['general'];
+
     let categoriesArray = [];
-    if (categories) {
-      try {
-        categoriesArray = typeof categories === 'string'
-          ? (categories.startsWith('[') ? JSON.parse(categories) : [categories])
-          : Array.isArray(categories) ? categories : [];
-      } catch (e) {
-        categoriesArray = [categories];
-      }
+    try {
+      categoriesArray = typeof finalCategories === 'string'
+        ? (finalCategories.startsWith('[') ? JSON.parse(finalCategories) : [finalCategories])
+        : Array.isArray(finalCategories) ? finalCategories : [finalCategories];
+    } catch (e) {
+      categoriesArray = [finalCategories];
     }
 
     // Handle cover image if uploaded
     let coverImage = '';
     if (req.file) {
-      const s3Key = `podcasts/${req.user._id}/covers/${Date.now()}-${req.file.originalname}`;
+      console.log(`🖼️ Uploading cover image for podcast: ${req.file.originalname}`);
       // Use general uploadFile utility which handles both S3 and Local based on config
-      coverImage = await uploadFile(req.file, s3Key, req.file.mimetype, true);
+      coverImage = await uploadFile(req.file.path, s3Key, req.file.mimetype, true);
+      console.log('✅ Cover image uploaded successfully:', coverImage);
       // Clean up temp file
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     }
@@ -62,20 +65,14 @@ export const uploadPodcast = async (req, res, next) => {
         : Array.isArray(keywords) ? keywords : [];
     }
 
-    // Create podcast show document
     const podcast = await Podcast.create({
       title: title.trim(),
-      description: description.trim(),
+      description: (description || 'No description provided').trim(),
       categories: categoriesArray,
       keywords: keywordsArray,
       host: host || req.user.name,
       artist: req.user._id,
       coverImage: coverImage || ''
-    });
-
-    res.status(201).json({
-      success: true,
-      data: podcast
     });
 
     res.status(201).json({

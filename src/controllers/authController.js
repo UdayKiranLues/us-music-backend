@@ -114,7 +114,7 @@ export const login = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
 
   const loginField = email || username;
-  const query = email 
+  const query = email
     ? { email: email.toLowerCase() }
     : { username: username.toLowerCase() };
 
@@ -122,7 +122,7 @@ export const login = asyncHandler(async (req, res) => {
 
   // Check if user exists
   const user = await User.findOne(query).select('+password');
-  
+
   if (!user) {
     console.log('❌ User not found for:', loginField);
     throw new AppError('Invalid credentials', 401);
@@ -133,7 +133,7 @@ export const login = asyncHandler(async (req, res) => {
   // Check password
   const isPasswordValid = await user.comparePassword(password);
   console.log('🔑 Password validation result:', isPasswordValid);
-  
+
   if (!isPasswordValid) {
     console.log('❌ Invalid password for user:', email);
     throw new AppError('Invalid credentials', 401);
@@ -392,14 +392,30 @@ export const setUserRole = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      role,
-      roleSelected: true
-    },
-    { new: true }
-  );
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      error: "User not found"
+    });
+  }
+
+  // If upgrading to artist, ensure ArtistProfile exists
+  if (role === 'artist') {
+    const existingProfile = await ArtistProfile.findOne({ userId: user._id });
+    if (!existingProfile) {
+      console.log('🎨 Creating new ArtistProfile for user:', user._id);
+      const profile = await ArtistProfile.create({
+        userId: user._id,
+        artistName: user.name || user.username,
+      });
+      user.artistProfile = profile._id;
+    }
+  }
+
+  user.role = role;
+  user.roleSelected = true;
+  await user.save();
 
   if (!user) {
     return res.status(404).json({
