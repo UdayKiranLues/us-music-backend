@@ -1,4 +1,13 @@
+import path from 'path';
+import fs from 'fs';
 import { getSignedS3Url } from '../utils/s3.js';
+import Song from '../models/Song.js';
+import History from '../models/History.js';
+import { AppError } from '../utils/errors.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+import logger from '../utils/logger.js';
+import config from '../config/index.js';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 /**
  * Get presigned S3 URL for a song's cover image
  * @route GET /api/v1/songs/:id/cover-signed-url
@@ -30,13 +39,7 @@ export const getCoverSignedUrl = asyncHandler(async (req, res) => {
   const signedUrl = await getSignedS3Url(s3Key, 3600);
   res.json({ success: true, url: signedUrl });
 });
-import Song from '../models/Song.js';
-import History from '../models/History.js';
-import { AppError } from '../utils/errors.js';
-import { asyncHandler } from '../middleware/errorHandler.js';
-import logger from '../utils/logger.js';
-import config from '../config/index.js';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+
 
 /**
  * Get all songs with pagination and filters
