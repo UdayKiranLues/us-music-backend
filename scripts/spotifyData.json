@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "track": {
+        "album": {
+          "images": [
+            {
+              "url": "https://i.scdn.co/image/ab67616d0000b27341e31d6ea1d493dd77933ee5"
+            }
+          ],
+          "name": "Sample Album"
+        },
+        "artists": [
+          {
+            "name": "Demo Artist"
+          }
+        ],
+        "duration_ms": 210000,
+        "name": "Demo Spotify Track",
+        "popularity": 85,
+        "preview_url": "https://p.scdn.co/mp3-preview/a91bed73ad92a014972b2576b2bd2b260ee95de6"
+      }
+    }
+  ]
+}

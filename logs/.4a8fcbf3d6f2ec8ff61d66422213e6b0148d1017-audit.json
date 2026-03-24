@@ -6,24 +6,9 @@
     "auditLog": "D:\\Dev\\us-music\\us-music-backend\\logs\\.4a8fcbf3d6f2ec8ff61d66422213e6b0148d1017-audit.json",
     "files": [
         {
-            "date": 1770194826238,
-            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-02-04.log",
-            "hash": "d1302294d81598da8ce4708e897cd514c6bc685bef7cff97d9fc77dccdf986ba"
-        },
-        {
-            "date": 1770269895389,
-            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-02-05.log",
-            "hash": "5e056de68495a5271957a07c82e69d73d0a09d8a6a791fee063445b2233fdcc0"
-        },
-        {
-            "date": 1770363514025,
-            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-02-06.log",
-            "hash": "9f7106c196508ed84a0169cc97d689848187890d5f7ac3ac206dd241c174915a"
-        },
-        {
-            "date": 1771067094403,
-            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-02-14.log",
-            "hash": "316bc03a2f23d38e9611dcb28ac817bc05f7ae5455fcbca73f483fd7f56d870a"
+            "date": 1774283444628,
+            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-03-23.log",
+            "hash": "885a6323eff14cdd0ac390803195bef206424d670c79a4ebbbe8d7806dc81e6e"
         }
     ],
     "hashType": "sha256"
