@@ -79,7 +79,7 @@ export const uploadSong = async (req, res, next) => {
       bpm: bpm ? parseInt(bpm) : undefined,
       language,
       duration: metadata.duration,
-      coverImageUrl: 'https://via.placeholder.com/300', // Temporary placeholder
+      coverImageUrl: 'https://placehold.co/300', // Temporary placeholder
       hlsUrl: 'temp', // Will be updated after S3 upload
     });
 
@@ -219,14 +219,14 @@ export const uploadSongWithCover = async (req, res, next) => {
       bpm: bpm ? parseInt(bpm) : undefined,
       language,
       duration: metadata.duration,
-      coverImageUrl: 'https://via.placeholder.com/300',
+      coverImageUrl: 'https://placehold.co/300',
       hlsUrl: 'temp',
     });
 
     const songId = tempSong._id.toString();
 
     // Upload cover image if provided
-    let coverUrl = 'https://via.placeholder.com/300';
+    let coverUrl = 'https://placehold.co/300';
     if (coverFile) {
       try {
         console.log('🖼️ Uploading cover image to S3...');
