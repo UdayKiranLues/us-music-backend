@@ -25,8 +25,8 @@ import podcastEpisodeRoutes from './routes/podcastEpisodeRoutes.js';
 import artistAuthRoutes from './routes/artistAuthRoutes.js';
 import artistRoutes from './routes/artistRoutes.js';
 import artistPodcastRoutes from './routes/artistPodcastRoutes.js';
-import albumRoutes from './routes/albumRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import albumRoutes from './routes/albumRoutes.js';
 import publicArtistRoutes from './routes/publicArtistRoutes.js';
 
 const app = express();

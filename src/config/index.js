@@ -122,7 +122,6 @@ const config = {
     maxPageSize: parseInt(process.env.MAX_PAGE_SIZE, 10) || 100,
   },
 
-  // Storage
   storage: {
     type: process.env.STORAGE_TYPE || 's3', // 's3' or 'local'
     localDir: path.isAbsolute(process.env.LOCAL_UPLOAD_DIR || 'uploads')
