@@ -465,7 +465,16 @@ export const proxyHLS = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error('❌ HLS proxy error:', error.message);
     if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
-      return res.status(404).send('HLS file not found');
+      
+      // Fallback for local development: If S3 doesn't have it, check local D: drive
+      const localPath = path.resolve(config.storage.localDir || 'uploads', 'songs', req.params.id, 'hls', req.params[0]);
+      if (fs.existsSync(localPath)) {
+        console.log(`📂 FALLBACK: File missing from S3, but found locally! Serving: ${localPath}`);
+        const stream = fs.createReadStream(localPath);
+        return stream.pipe(res);
+      }
+
+      return res.status(404).send('HLS file not found on S3 or local disk');
     }
     res.status(500).send('Failed to proxy HLS stream');
   }
