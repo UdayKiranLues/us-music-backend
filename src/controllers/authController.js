@@ -260,6 +260,15 @@ export const chooseRole = asyncHandler(async (req, res) => {
 
   const user = req.user;
 
+  // 🛡️ SECURITY GUARD: Prevent downgrading an admin
+  if (user.role === 'admin') {
+    return res.json({
+      success: true,
+      message: 'Admin role is protected. No change applied.',
+      data: { user }
+    });
+  }
+
   // If choosing artist role, create ArtistProfile
   if (role === 'artist') {
     const existingProfile = await ArtistProfile.findOne({ userId: user._id });
@@ -397,6 +406,15 @@ export const setUserRole = asyncHandler(async (req, res) => {
     return res.status(404).json({
       success: false,
       error: "User not found"
+    });
+  }
+
+  // 🛡️ SECURITY GUARD: Prevent downgrading an admin
+  if (user.role === 'admin') {
+    return res.json({
+      success: true,
+      message: 'Admin role is protected. No change applied.',
+      user
     });
   }
 

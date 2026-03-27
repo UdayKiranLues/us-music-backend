@@ -130,14 +130,21 @@ export const fixAdminUser = async () => {
   try {
     logger.info('🔧 Fixing admin user...');
     
-    // Delete existing admin if exists
-    await User.deleteOne({ email: 'admin@usmusic.com' });
-    logger.info('Deleted existing admin user');
+    // Forcefully update the user to be an admin if they already exist
+    let admin = await User.findOne({ email: 'admin@usmusic.com' });
     
-    // Create new admin with correct password hashing
-    await createAdminUser();
+    if (admin) {
+      console.log('🔧 Admin user exists, forcing role to "admin"...');
+      admin.role = 'admin';
+      admin.roleSelected = true;
+      admin.isActive = true;
+      await admin.save();
+    } else {
+      // Create new admin if they truly don't exist
+      await createAdminUser();
+    }
     
-    logger.info('✅ Admin user fixed successfully');
+    logger.info('✅ Admin user fixed and role verified');
   } catch (error) {
     logger.error('Failed to fix admin user:', error);
     throw error;
