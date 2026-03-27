@@ -169,7 +169,7 @@ export const login = asyncHandler(async (req, res) => {
       role: user.role,
       roleSelected: user.roleSelected
     },
-    redirectTo: user.role === "admin" ? "/admin" : (user.role === "artist" ? "/artist/dashboard" : "/home")
+    redirectTo: req.user.role === "admin" ? "/admin" : (req.user.role === "artist" ? "/artist/dashboard" : "/home")
   });
 });
 
