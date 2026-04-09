@@ -61,6 +61,7 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "https://us-music-frontend.vercel.app",
   "http://localhost",
+  "https://localhost",
   "capacitor://localhost"
 ];
 
