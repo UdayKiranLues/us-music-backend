@@ -113,6 +113,12 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
 
+  console.log('🔐 LOGIN REQUEST RECEIVED');
+  console.log('📍 Body keys:', Object.keys(req.body));
+  console.log('📧 Email:', email);
+  console.log('👤 Username:', username);
+  console.log('🔑 Password received:', !!password, '(length:', password?.length, ')');
+
   const loginField = email || username;
   const query = email
     ? { email: email.toLowerCase() }
@@ -129,10 +135,14 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   console.log('✅ User found:', user.email, 'Role:', user.role);
+  console.log('📊 User password field exists:', !!user.password);
+  console.log('📊 User password length:', user.password?.length);
 
   // Check password
   const isPasswordValid = await user.comparePassword(password);
   console.log('🔑 Password validation result:', isPasswordValid);
+  console.log('📊 Password input length:', password?.length);
+  console.log('📊 Password input:', password ? password.substring(0, 5) + '...' : 'EMPTY');
 
   if (!isPasswordValid) {
     console.log('❌ Invalid password for user:', email);
