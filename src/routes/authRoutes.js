@@ -5,6 +5,18 @@ import { validate, schemas } from '../middleware/validation.js';
 
 const router = express.Router();
 
+// Health check endpoint - shows what code is currently deployed
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'auth-api',
+    version: 'with-diagnostic-logging-v2',
+    commit: '5be457b',
+    ready: true
+  });
+});
+
 router.post('/register', validate(schemas.register), register);
 router.post('/login', validate(schemas.login), login);
 router.post('/logout', authenticate, logout);
