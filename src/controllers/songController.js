@@ -8,6 +8,18 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+
+const getRequestBaseUrl = (req) => {
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+
+  return config.storage.baseUrl;
+};
 /**
  * Get presigned S3 URL for a song's cover image
  * @route GET /api/v1/songs/:id/cover-signed-url
@@ -333,7 +345,7 @@ export const getSecureStream = asyncHandler(async (req, res) => {
     }
 
     // Direct stream URL to completely bypass slow Vercel Lambda proxies
-    let streamUrl = song.hlsUrl;
+    let streamUrl = `${getRequestBaseUrl(req)}/api/v1/songs/${songId}/hls/playlist.m3u8`;
     
     // If it's a relative local URL, append the base local proxy URL
     if (!streamUrl.startsWith('http')) {
@@ -348,6 +360,8 @@ export const getSecureStream = asyncHandler(async (req, res) => {
       success: true,
       data: {
         streamUrl,
+        title: song.title,
+        artist: song.artist,
       },
     });
   } catch (error) {
