@@ -83,6 +83,8 @@ export const convertToHLS = (inputPath, outputDir) => {
       const outputPath = path.join(outputDir, playlistName);
 
       ffmpeg(inputPath)
+        .noVideo()
+        .outputOptions(['-map 0:a:0'])
         // Audio codec settings
         .audioCodec('aac')
         .audioBitrate('128k')
@@ -94,12 +96,10 @@ export const convertToHLS = (inputPath, outputDir) => {
           '-f hls',                           // HLS format
           '-hls_time 10',                     // 10 second segments
           '-hls_list_size 0',                 // Include all segments in playlist
+          '-hls_playlist_type vod',           // Full VOD playlist for complete song playback
           '-hls_segment_type mpegts',         // MPEG-TS segments
           `-hls_segment_filename ${path.join(outputDir, segmentPattern)}`,
           '-start_number 0',                  // Start segment numbering at 0
-          '-sc_threshold 0',                  // Disable scene change detection
-          '-g 48',                            // GOP size
-          '-keyint_min 48',                   // Minimum keyframe interval
           '-hls_allow_cache 1',               // Allow caching
         ])
         .output(outputPath)
