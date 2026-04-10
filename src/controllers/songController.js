@@ -332,10 +332,15 @@ export const getSecureStream = asyncHandler(async (req, res) => {
       });
     }
 
-    // Use backend proxy URL to bypass CORS issues
-    const streamUrl = `${config.storage.baseUrl}/api/v1/songs/${songId}/hls/playlist.m3u8`;
+    // Direct stream URL to completely bypass slow Vercel Lambda proxies
+    let streamUrl = song.hlsUrl;
+    
+    // If it's a relative local URL, append the base local proxy URL
+    if (!streamUrl.startsWith('http')) {
+      streamUrl = `${config.storage.baseUrl}/api/v1/songs/${songId}/hls/playlist.m3u8`;
+    }
 
-    console.log(`✅ Stream URL generated: ${streamUrl}`);
+    console.log(`✅ Stream URL directly resolved to: ${streamUrl}`);
     logger.info(`Stream: ${song._id}, song: ${song.title}`);
 
     // Return simple response
