@@ -24,6 +24,11 @@
             "date": 1775806530183,
             "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-04-10.log",
             "hash": "bb0444824151e64d0b96524e056eee39ac3f7f932bc58a4dd17c7fe53ae72572"
+        },
+        {
+            "date": 1775903676048,
+            "name": "D:\\Dev\\us-music\\us-music-backend\\logs\\error-2026-04-11.log",
+            "hash": "fe299644a4ae1bfb51bc55fefe5c2fb9a3ecb0325f0bb40d2b4db0938a54e8a7"
         }
     ],
     "hashType": "sha256"

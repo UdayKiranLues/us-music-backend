@@ -10,14 +10,18 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/utils/seedDatabase.js",
     "test:analytics": "node scripts/testAnalytics.js",
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:diagnostics": "jest tests/diagnostics.test.js --forceExit",
+    "test:playback": "jest tests/playback.test.js --forceExit",
     "docker:build": "docker build -t us-music-backend .",
     "docker:run": "docker run -p 5002:5000 --env-file .env us-music-backend",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f backend",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up",
-    "logs:clean": "rm -rf logs/*",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "logs:clean": "rm -rf logs/*"
   },
   "keywords": [
     "music",
@@ -60,6 +64,8 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
     "nodemon": "^3.0.2"
   },
   "engines": {

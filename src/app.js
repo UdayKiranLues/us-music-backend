@@ -28,6 +28,7 @@ import artistPodcastRoutes from './routes/artistPodcastRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import albumRoutes from './routes/albumRoutes.js';
 import publicArtistRoutes from './routes/publicArtistRoutes.js';
+import diagnosticsRoutes from './routes/diagnosticsRoutes.js';
 
 const app = express();
 
@@ -222,6 +223,7 @@ app.use(`${apiVersion}/auth/artist`, artistAuthRoutes);
 app.use(`${apiVersion}/artist`, artistRoutes);
 app.use(`${apiVersion}/artist`, artistPodcastRoutes);
 app.use(`${apiVersion}/admin`, adminRoutes);
+app.use(`${apiVersion}/diagnostics`, diagnosticsRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
